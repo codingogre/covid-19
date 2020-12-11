@@ -1,0 +1,7 @@
+Geo Queries:
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html
+
+Geo Aggregations:
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geodistance-aggregation.html
