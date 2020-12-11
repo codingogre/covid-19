@@ -1,0 +1,257 @@
+GET /covid-19/_search
+{
+  "size": 20, 
+  "query": {
+    "match_all": {}
+  }
+}
+
+DELETE /covid-19
+
+DELETE _index_template/covid-19
+
+GET _index_template/covid-19
+
+PUT _index_template/covid-19
+{
+  "template": {
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "active": {
+          "type": "float"
+        },
+        "case-fatality_ratio": {
+          "type": "float"
+        },
+        "confirmed": {
+          "type": "long"
+        },
+        "country_region": {
+          "type": "keyword"
+        },
+        "county": {
+          "type": "keyword"
+        },
+        "combined_key": {
+          "type": "keyword"
+        },
+        "deaths": {
+          "type": "long"
+        },
+        "fips": {
+          "type": "float"
+        },
+        "incidence_rate": {
+          "type": "float"
+        },
+        "last_update": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ssz"
+        },
+        "location": {
+          "type": "geo_point"
+        },
+        "province_state": {
+          "type": "keyword"
+        },
+        "country_alpha3": {
+          "type": "keyword"
+        },
+        "recovered": {
+          "type": "long"
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ssz"
+        }
+      }
+    }
+  },
+  "index_patterns": [
+    "covid*"
+  ]
+}
+
+# Find ALL documents that are within 20 miles of me
+GET /covid-19/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "geo_distance": {
+          "distance": "20mi",
+          "location": "40.128914,-83.126343"
+        }
+      }
+    }
+  }
+}
+
+# Sort all documents by distance closest to me
+GET /covid-19/_search
+{
+  "size": 10000,
+  "sort" : [
+    {
+      "_geo_distance" : {
+          "location" : "40.128914,-83.126343",
+          "order" : "asc",
+          "unit" : "mi",
+          "distance_type" : "arc",
+          "ignore_unmapped": true
+      }
+    }
+  ]
+}
+
+# Sort all documents by distance closest to me, but only the ones from Delaware county
+GET /covid-19/_search
+{
+  "sort" : [
+    {
+      "_geo_distance" : {
+          "location" : "40.128914,-83.126343",
+          "order" : "asc",
+          "unit" : "mi",
+          "distance_type" : "arc",
+          "ignore_unmapped": true
+      }
+    }
+  ],
+  "query" : {
+    "term" : { "county" : "Delaware" }
+  }
+}
+
+# Find ALL documents that are within 20 miles of me and 
+# have been last updated between December 1st - 2nd
+# and sort by closest to me
+GET /covid-19/_search
+{
+  "sort" : [
+    {
+      "_geo_distance" : {
+          "location" : "40.128914,-83.126343",
+          "order" : "asc",
+          "unit" : "mi",
+          "distance_type" : "arc"
+      }
+    }
+  ],
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "geo_distance": {
+            "distance": "20mi",
+            "location": "40.128914,-83.126343"
+          }
+        },
+        {
+          "range": {
+            "last_update": {
+              "gte": "2020-12-01T00:00:00.000Z",
+              "lte": "2020-12-02T00:00:00.000Z",
+              "format": "strict_date_optional_time"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+# Find ALL documents that are within 20 miles of me and 
+# have been last updated between December 1st - 2nd
+# and sort by closest to me, but limit it to Delaware and Franklin counties
+GET /covid-19/_search
+{
+  "sort" : [
+    {
+      "_geo_distance" : {
+          "location" : "40.128914,-83.126343",
+          "order" : "asc",
+          "unit" : "mi",
+          "distance_type" : "arc",
+          "ignore_unmapped": true
+      }
+    }
+  ],
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "geo_distance": {
+            "distance": "50mi",
+            "location": "40.128914,-83.126343"
+          }
+        },
+        {
+          "range": {
+            "last_update": {
+              "gte": "2020-12-01T00:00:00.000Z",
+              "lte": "2020-12-02T00:00:00.000Z",
+              "format": "strict_date_optional_time"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+# Find ALL documents that are within the county of Delaware, Ohio
+GET /covid-19/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "shape": {
+          "coordinates": {
+            "indexed_shape": {
+              "index": "ohio_counties_full",
+              "id": "bH0BJXYBA6E1rILffgUI",
+              "path": "coordinates"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+POST /covid-19/_search?size=0
+{
+  "aggs": {
+    "rings_around_me": {
+      "geo_distance": {
+        "field": "location",
+        "origin": "40.128914,-75.126343",
+        "unit": "mi", 
+        "ranges": [
+          { "to": 1, "key": "mile 1" },
+          { "from": 1, "to": 2, "key": "mile 2" },
+          { "from": 2, "to": 3, "key": "mile 3" },
+          { "from": 3, "to": 4, "key": "mile 4" },
+          { "from": 4, "to": 5, "key": "mile 5" },
+          { "from": 5, "to": 6, "key": "mile 6" },
+          { "from": 6, "to": 7, "key": "mile 7" },
+          { "from": 7, "to": 8, "key": "mile 8" },
+          { "from": 8, "to": 9, "key": "mile 9" },
+          { "from": 9, "to": 10, "key": "mile 10" },
+          { "from": 10, "to": 11, "key": "mile 11" },
+          { "from": 11, "to": 12, "key": "mile 12" },
+          { "from": 12, "to": 13, "key": "mile 13" },
+          { "from": 13, "to": 14, "key": "mile 14" },
+          { "from": 14, "to": 15, "key": "mile 15" },
+          { "from": 15, "to": 16, "key": "mile 16" },
+          { "from": 16, "to": 17, "key": "mile 17" },
+          { "from": 17, "to": 18, "key": "mile 18" },
+          { "from": 18, "to": 19, "key": "mile 19" },
+          { "from": 19, "to": 20, "key": "mile 20" }
+        ]
+      }
+    }
+  }
+}
